@@ -1,0 +1,1516 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tripp.Scenes — v2-inline-002</title>
+
+
+
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg: #000000;
+  --bg-block: #000000;
+  --bg-assigned: #1a1a1a;
+  --border: #2a2a2a;
+  --text: #e0e0e0;
+  --text-dim: #555;
+  --accent: #39ff14;
+  --accent-dim: rgba(57,255,20,0.12);
+  --green: #39ff14;
+  --yellow: #b8ff00;
+  --red: #ff3333;
+}
+
+body {
+  font-family: 'JetBrains Mono', monospace;
+  background: var(--bg);
+  color: var(--text);
+  height: 100vh;
+  overflow: hidden;
+}
+
+body::after {
+  content: '';
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255,255,255,0.012) 2px, rgba(255,255,255,0.012) 4px);
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* TOOLBAR */
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  background: #111;
+  border-bottom: 1px solid var(--border);
+  height: 50px;
+  z-index: 100;
+  position: relative;
+}
+
+.toolbar label {
+  font-size: 9px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.toolbar input[type="text"],
+.toolbar select {
+  background: #1a1a1a;
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  padding: 6px 10px;
+  border-radius: 3px;
+  outline: none;
+}
+
+.toolbar input:focus, .toolbar select:focus { border-color: var(--accent); }
+.toolbar .title-input { flex: 1; min-width: 120px; }
+
+.btn {
+  background: #1a1a1a;
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  padding: 6px 12px;
+  border-radius: 3px;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: all 0.15s;
+}
+
+.btn:hover { background: #252525; border-color: var(--accent); color: var(--accent); }
+.btn-primary { border-color: var(--accent); color: var(--accent); }
+.btn-edit-active { background: var(--accent); color: #000; border-color: var(--accent); }
+
+/* STORY VAULT DRAWER */
+.story-vault-overlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 300;
+  transition: opacity 0.3s;
+}
+
+.story-vault-overlay.open { display: block; }
+
+.story-vault {
+  position: fixed;
+  top: 0; left: 0; bottom: 0;
+  width: 360px;
+  background: #0a0a0a;
+  border-right: 1px solid var(--border);
+  z-index: 301;
+  transform: translateX(-100%);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+}
+
+.story-vault.open { transform: translateX(0); }
+
+.vault-header {
+  padding: 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #111;
+}
+
+.vault-title {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.vault-close {
+  font-size: 16px;
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: color 0.15s;
+  background: none;
+  border: none;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.vault-close:hover { color: var(--red); }
+
+.vault-actions {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  gap: 8px;
+}
+
+.vault-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+.vault-item {
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  margin-bottom: 6px;
+  cursor: pointer;
+  transition: all 0.15s;
+  background: #111;
+}
+
+.vault-item:hover {
+  border-color: var(--accent);
+  background: #1a1a1a;
+}
+
+.vault-item.active {
+  border-color: var(--accent);
+  background: var(--accent-dim);
+}
+
+.vault-item-title {
+  font-size: 12px;
+  font-weight: 500;
+  margin-bottom: 4px;
+  color: var(--text);
+}
+
+.vault-item-meta {
+  font-size: 9px;
+  color: var(--text-dim);
+  display: flex;
+  gap: 12px;
+}
+
+.vault-item-meta span { display: flex; align-items: center; gap: 4px; }
+.vault-item-meta .chars { color: var(--accent); }
+
+.vault-item-chars {
+  display: flex;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.vault-item-char {
+  font-size: 8px;
+  padding: 2px 6px;
+  border-radius: 3px;
+  background: #1a1a1a;
+  border: 1px solid var(--border);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.vault-item-delete {
+  float: right;
+  font-size: 10px;
+  color: var(--text-dim);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.vault-item:hover .vault-item-delete { opacity: 1; }
+.vault-item-delete:hover { color: var(--red); }
+
+.vault-empty {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-dim);
+  font-size: 11px;
+}
+
+.vault-empty pre {
+  font-size: 10px;
+  color: #2a2a2a;
+  margin-bottom: 12px;
+}
+
+/* CHARACTER BAR */
+.char-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: #0d0d0d;
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+  min-height: 48px;
+}
+
+.char-bar::-webkit-scrollbar { height: 3px; }
+.char-bar::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
+
+.char-bar-title {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--text-dim);
+  flex-shrink: 0;
+  margin-right: 4px;
+}
+
+.char-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: #1a1a1a;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.char-chip:hover { border-color: #444; }
+
+.char-chip.active {
+  box-shadow: 0 0 16px var(--accent-dim);
+  border-color: var(--accent);
+  background: #1e1e1e;
+}
+
+.char-chip .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+.char-chip .remove {
+  font-size: 9px;
+  color: var(--text-dim);
+  margin-left: 4px;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.char-chip:hover .remove { opacity: 1; }
+.char-chip .remove:hover { color: var(--red); }
+
+.add-char-btn {
+  padding: 6px 12px;
+  border-radius: 20px;
+  border: 1px dashed var(--border);
+  background: transparent;
+  color: var(--text-dim);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+
+.add-char-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+/* HINT BAR */
+.hint-bar {
+  padding: 6px 16px;
+  background: #111;
+  border-bottom: 1px solid var(--border);
+  font-size: 10px;
+  color: var(--text-dim);
+  display: flex;
+  gap: 20px;
+}
+
+.hint-bar .active-char { color: var(--accent); font-weight: 700; }
+
+/* MAIN LAYOUT */
+.main-layout {
+  display: flex;
+  height: calc(100vh - 50px - 48px - 30px - 44px);
+}
+
+/* EDITOR */
+.editor {
+  width: 65%;
+  overflow-y: auto;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border-right: 1px solid var(--border);
+}
+
+/* RIGHT PANEL */
+.right-panel {
+  width: 35%;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background: #080808;
+}
+
+.panel-section {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.panel-header {
+  padding: 10px 14px;
+  background: #111;
+  border-bottom: 1px solid var(--border);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--text-dim);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.panel-header .count { color: var(--accent); font-weight: 700; }
+
+.panel-body { padding: 12px; }
+
+/* TAG GRID */
+.tag-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+}
+
+.tag-btn {
+  padding: 10px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  background: #1a1a1a;
+  color: var(--text);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tag-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-dim);
+}
+
+.tag-btn:active { transform: scale(0.95); }
+
+.tag-btn.inserted {
+  border-color: var(--green);
+  color: var(--green);
+  animation: tagFlash 0.4s ease;
+}
+
+@keyframes tagFlash {
+  0% { background: var(--accent-dim); }
+  100% { background: #1a1a1a; }
+}
+
+.custom-tag-row {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
+.custom-tag-row input {
+  flex: 1;
+  background: #1a1a1a;
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  padding: 6px 8px;
+  border-radius: 3px;
+  outline: none;
+}
+
+.custom-tag-row input:focus { border-color: var(--accent); }
+
+.tag-preview {
+  margin-top: 8px;
+  padding: 8px 10px;
+  background: #111;
+  border-radius: 4px;
+  font-size: 10px;
+  color: var(--text-dim);
+  border: 1px solid var(--border);
+}
+
+.tag-preview .label {
+  color: var(--accent);
+  font-weight: 700;
+  margin-bottom: 4px;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.tag-preview code {
+  color: var(--green);
+  background: #1a1a1a;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 11px;
+}
+
+/* FORMAT GUIDE */
+.format-list { display: flex; flex-direction: column; gap: 6px; }
+
+.format-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 10px;
+  color: var(--text-dim);
+}
+
+.format-item .fmt-label {
+  padding: 2px 6px;
+  background: #1a1a1a;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  font-size: 9px;
+  text-transform: uppercase;
+  color: var(--accent);
+  min-width: 36px;
+  text-align: center;
+}
+
+.format-item .fmt-desc { color: var(--text); }
+
+/* BLOCKS */
+.block {
+  position: relative;
+  background: var(--bg-block);
+  border: 1px solid var(--border);
+  border-top: 2px solid transparent;
+  border-radius: 4px;
+  transition: all 0.15s;
+}
+
+.block:hover { border-color: #333; }
+.block.assigned { background: var(--bg-assigned); }
+
+.block.break-before {
+  margin-top: 16px;
+  border-top: 2px dashed var(--border);
+  padding-top: 4px;
+}
+
+.drag-dots {
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  opacity: 0.15;
+  cursor: grab;
+}
+
+.block:hover .drag-dots { opacity: 0.4; }
+.drag-dots span { width: 3px; height: 3px; background: var(--text-dim); border-radius: 50%; display: block; }
+
+.block-label {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  padding: 8px 14px 0;
+}
+
+.block textarea {
+  width: 100%;
+  background: transparent;
+  border: none;
+  color: var(--text);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  padding: 4px 14px 8px;
+  resize: none;
+  outline: none;
+  min-height: 50px;
+}
+
+.unassigned-label {
+  font-size: 9px;
+  color: var(--red);
+  opacity: 0.5;
+  padding: 8px 14px 0;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.block-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 2px 14px 6px;
+  font-size: 10px;
+  color: var(--text-dim);
+}
+
+.char-progress {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 3px;
+  background: var(--green);
+  border-radius: 0 0 4px 4px;
+  transition: all 0.2s;
+}
+
+.block-delete {
+  position: absolute;
+  top: 6px; right: 8px;
+  font-size: 11px;
+  color: var(--text-dim);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s;
+  z-index: 2;
+}
+
+.block:hover .block-delete { opacity: 1; }
+.block-delete:hover { color: var(--red); }
+
+/* EDIT MODE */
+.block.editable { cursor: grab; user-select: none; }
+.block.editable:active { cursor: grabbing; }
+
+.block.editable.selected {
+  border-color: var(--accent);
+  background: var(--accent-dim);
+  box-shadow: 0 0 12px var(--accent-dim);
+}
+
+.block.dragging { opacity: 0.4; border-style: dashed; }
+
+.drop-indicator { position: relative; height: 0; overflow: visible; pointer-events: none; }
+
+.drop-indicator::before {
+  content: '';
+  position: absolute;
+  left: 0; right: 0; top: -2px;
+  height: 4px;
+  background: var(--yellow);
+  border-radius: 2px;
+  box-shadow: 0 0 12px rgba(184,255,0,0.5);
+  z-index: 10;
+}
+
+.drop-indicator::after {
+  content: '▼';
+  position: absolute;
+  left: 50%; top: -8px;
+  transform: translateX(-50%);
+  color: var(--yellow);
+  font-size: 10px;
+  z-index: 11;
+}
+
+.drop-indicator-top { border-top: 3px solid var(--yellow) !important; box-shadow: inset 0 4px 12px rgba(184,255,0,0.15); }
+.drop-indicator-bottom { border-bottom: 3px solid var(--yellow) !important; box-shadow: inset 0 -4px 12px rgba(184,255,0,0.15); }
+
+.edit-check {
+  position: absolute;
+  top: 8px; right: 32px;
+  width: 16px; height: 16px;
+  accent-color: var(--accent);
+  cursor: pointer;
+  display: none;
+  z-index: 3;
+}
+
+.edit-mode .edit-check { display: block; }
+.edit-mode .block-delete { right: 8px; }
+
+/* SEPARATOR */
+.separator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 12px 0;
+  color: var(--text-dim);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.separator::before, .separator::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+.separator .diamond { color: var(--accent); }
+
+/* BOTTOM BAR */
+.bottom-bar {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  padding: 8px 16px;
+  background: #111;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  z-index: 50;
+  min-height: 44px;
+}
+
+.duration-ticker { display: flex; align-items: center; gap: 12px; font-size: 10px; color: var(--text-dim); }
+.duration-ticker .est { color: var(--accent); font-weight: 700; font-size: 14px; }
+.duration-ticker .formats { display: flex; gap: 6px; }
+
+.duration-ticker .fmt {
+  padding: 2px 8px;
+  border-radius: 3px;
+  background: #1a1a1a;
+  border: 1px solid var(--border);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.duration-ticker .fmt.match { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
+.bottom-actions { margin-left: auto; display: flex; gap: 8px; }
+
+.btn-generate {
+  background: var(--accent);
+  color: #000;
+  border: none;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 7px 18px;
+  border-radius: 4px;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.btn-generate:hover { background: #50ff30; }
+
+/* MODAL */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.7);
+  z-index: 200;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-overlay.visible { display: flex; }
+
+.modal {
+  background: #111;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 20px;
+  width: 300px;
+}
+
+.modal h3 {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--accent);
+  margin-bottom: 16px;
+}
+
+.modal input {
+  width: 100%;
+  background: #1a1a1a;
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  padding: 8px 10px;
+  border-radius: 3px;
+  outline: none;
+  margin-bottom: 10px;
+}
+
+.modal input:focus { border-color: var(--accent); }
+.modal-actions { display: flex; gap: 8px; margin-top: 12px; }
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+
+@media (max-width: 768px) {
+  .toolbar { flex-wrap: wrap; height: auto; padding: 8px; gap: 6px; }
+  .main-layout { flex-direction: column; height: auto; }
+  .editor { width: 100%; border-right: none; padding: 12px; padding-bottom: 20px; }
+  .right-panel { width: 100%; border-top: 1px solid var(--border); max-height: 50vh; }
+  .bottom-bar { flex-wrap: wrap; gap: 8px; }
+  .duration-ticker .formats { flex-wrap: wrap; }
+  .story-vault { width: 100%; }
+}
+
+</style>
+</head>
+<body>
+
+
+<!-- STORY VAULT DRAWER -->
+<div class="story-vault-overlay" id="vaultOverlay" onclick="closeVault()"></div>
+<div class="story-vault" id="storyVault">
+  <div class="vault-header">
+    <span class="vault-title">📚 Story Vault</span>
+    <button class="vault-close" onclick="closeVault()">✕</button>
+  </div>
+  <div class="vault-actions">
+    <button class="btn btn-primary" onclick="saveCurrentStory()" style="flex:1">💾 Save Current</button>
+    <button class="btn" onclick="newStory()">+ New</button>
+  </div>
+  <div class="vault-list" id="vaultList"></div>
+</div>
+
+<!-- TOOLBAR -->
+<div class="toolbar">
+  <button class="btn" onclick="openVault()" title="Story Vault">📚</button>
+  <label>Title</label>
+  <input type="text" class="title-input" id="titleInput" placeholder="Episode title..." value="Nova Breaks — Episode 5">
+  <label>Model</label>
+  <select id="modelSelect">
+    <option>Chatterbox</option>
+    <option>MiMo TTS</option>
+    <option>Orpheus</option>
+  </select>
+  <button class="btn" id="editBtn" onclick="toggleEditMode()">✎ Edit</button>
+  <button class="btn btn-primary" onclick="addBlock()">+ Block</button>
+</div>
+
+<div class="char-bar" id="charBar">
+  <div class="char-bar-title">Cast</div>
+</div>
+
+<div class="hint-bar">
+  <div id="hintActive">Click a chip → click a block to assign</div>
+  <div id="hintCount">0 blocks</div>
+</div>
+
+<div class="main-layout">
+  <div class="editor" id="editor">
+    <div class="empty-state" id="emptyState" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:#555;text-align:center;gap:12px">
+      <pre style="font-size:11px;color:#2a2a2a">
+┌──────────────────────────┐
+│   TRIPP.SCENES v002      │
+│  Story Vault + Tags      │
+│                          │
+│  📚 = open vault         │
+│  Click chip → block      │
+│  Right panel = tags      │
+│                          │
+│  Edit mode: drag reorder │
+└──────────────────────────┘
+      </pre>
+    </div>
+  </div>
+
+  <div class="right-panel">
+    <div class="panel-section">
+      <div class="panel-header">
+        <span>🎭 Emotion Tags</span>
+        <span class="count" id="tagCount">10</span>
+      </div>
+      <div class="panel-body">
+        <div class="tag-grid" id="tagGrid">
+          <button class="tag-btn" onclick="insertTag('[laugh]')">[laugh]</button>
+          <button class="tag-btn" onclick="insertTag('[chuckle]')">[chuckle]</button>
+          <button class="tag-btn" onclick="insertTag('[gasp]')">[gasp]</button>
+          <button class="tag-btn" onclick="insertTag('[sigh]')">[sigh]</button>
+          <button class="tag-btn" onclick="insertTag('[clear throat]')">[clear throat]</button>
+          <button class="tag-btn" onclick="insertTag('[shush]')">[shush]</button>
+          <button class="tag-btn" onclick="insertTag('[groan]')">[groan]</button>
+          <button class="tag-btn" onclick="insertTag('[sniff]')">[sniff]</button>
+          <button class="tag-btn" onclick="insertTag('[cough]')">[cough]</button>
+          <button class="tag-btn" onclick="insertTag('[pause]')">[pause]</button>
+        </div>
+        <div class="custom-tag-row">
+          <input type="text" id="customTagInput" placeholder="Custom tag..." onkeydown="if(event.key==='Enter')addCustomTag()">
+          <button class="btn" onclick="addCustomTag()">+</button>
+        </div>
+        <div class="tag-preview">
+          <div class="label">Last inserted</div>
+          <div id="lastTag">—</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel-section">
+      <div class="panel-header">
+        <span>📋 Model Reference</span>
+      </div>
+      <div class="panel-body">
+        <div class="format-list">
+          <div class="format-item">
+            <span class="fmt-label">CHK</span>
+            <span class="fmt-desc">All 10 tags. Max ~40s/chunk.</span>
+          </div>
+          <div class="format-item">
+            <span class="fmt-label">MiMo</span>
+            <span class="fmt-desc">Style tags via API. Max ~60s.</span>
+          </div>
+          <div class="format-item">
+            <span class="fmt-label">ORP</span>
+            <span class="fmt-desc">Inline tags. Max ~30s.</span>
+          </div>
+        </div>
+        <div class="tag-preview" style="margin-top:10px">
+          <div class="label">Char limit per block</div>
+          <div>500 chars · 40s safe window</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel-section">
+      <div class="panel-header">
+        <span>🎬 Scene Tools</span>
+      </div>
+      <div class="panel-body">
+        <button class="btn" style="width:100%" onclick="insertSceneBreak()">+ Scene Break</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="bottom-bar">
+  <div class="duration-ticker">
+    <span>Duration:</span>
+    <span class="est" id="durationEst">0:00</span>
+    <div class="formats" id="formatTicks">
+      <span class="fmt" data-max="10">10s</span>
+      <span class="fmt" data-max="20">20s</span>
+      <span class="fmt" data-max="60">1m</span>
+      <span class="fmt" data-max="120">2m</span>
+      <span class="fmt" data-max="300">5m</span>
+      <span class="fmt" data-max="600">10m</span>
+    </div>
+  </div>
+  <div class="bottom-actions">
+    <button class="btn" onclick="exportJSON()">Export JSON</button>
+    <button class="btn-generate" onclick="alert('Generate would start here')">▶ Generate</button>
+  </div>
+</div>
+
+<!-- Add Character Modal -->
+<div class="modal-overlay" id="addCharModal">
+  <div class="modal">
+    <h3>Add Character</h3>
+    <input type="text" id="modalCharName" placeholder="Character name...">
+    <input type="color" id="modalCharColor" value="#ff6b6b" style="width:48px;height:36px;padding:2px;cursor:pointer">
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="confirmAddChar()">Add</button>
+    </div>
+  </div>
+</div>
+<script src="app.js"></script>
+
+<script>
+// STATE
+let characters = [
+  { name: 'Nova', color: '#39ff14' },
+  { name: 'Aria', color: '#00ccff' }
+];
+
+let blocks = [
+  { id: 1, text: 'AI is fundamentally about pattern recognition. You feed it data, it finds the patterns.', char: 'Nova' },
+  { id: 2, text: 'Oh my god, that\'s so cool! But wait — what about when the patterns are wrong?', char: 'Aria' },
+  { id: 3, text: 'That\'s an excellent question. The short answer is no. It doesn\'t know it\'s wrong.', char: 'Nova' },
+  { id: 4, text: 'Wait, really? So it\'s just confidently incorrect? That\'s honestly kind of relatable.', char: 'Aria' },
+  { id: 5, text: '', char: null }
+];
+
+let selectedChar = null;
+let nextId = 6;
+let editMode = false;
+let selectedBlocks = new Set();
+let dragSrcId = null;
+let activeTextarea = null;
+let customTags = [];
+let currentStoryId = null;
+
+// TRACK ACTIVE TEXTAREA
+document.addEventListener('focusin', e => {
+  if (e.target.tagName === 'TEXTAREA') activeTextarea = e.target;
+});
+
+// TAG INSERTION
+function insertTag(tag) {
+  if (!activeTextarea) {
+    document.getElementById('lastTag').innerHTML = '<span style="color:var(--red)">Click a text block first!</span>';
+    return;
+  }
+  
+  const ta = activeTextarea;
+  const start = ta.selectionStart;
+  const end = ta.selectionEnd;
+  const text = ta.value;
+  const before = text.substring(0, start);
+  const after = text.substring(end);
+  const needsSpaceBefore = before.length > 0 && !before.endsWith(' ') && !before.endsWith('\n');
+  const needsSpaceAfter = after.length > 0 && !after.startsWith(' ') && !after.startsWith('\n');
+  const insert = (needsSpaceBefore ? ' ' : '') + tag + (needsSpaceAfter ? ' ' : '');
+  
+  ta.value = before + insert + after;
+  ta.selectionStart = ta.selectionEnd = start + insert.length;
+  ta.focus();
+  
+  const blockId = parseInt(ta.closest('.block')?.dataset.id);
+  if (blockId) {
+    const block = blocks.find(b => b.id === blockId);
+    if (block) {
+      block.text = ta.value;
+      updateCounts();
+      const el = ta.closest('.block');
+      const count = ta.value.length;
+      const ratio = count / 500;
+      const barColor = ratio > 0.8 ? 'var(--red)' : ratio > 0.6 ? 'var(--yellow)' : 'var(--green)';
+      el.querySelector('.block-bottom span').textContent = `${count} / 500`;
+      el.querySelector('.char-progress').style.width = Math.min(ratio * 100, 100) + '%';
+      el.querySelector('.char-progress').style.background = barColor;
+    }
+  }
+  
+  document.getElementById('lastTag').innerHTML = `<code>${tag}</code> inserted`;
+  
+  document.querySelectorAll('.tag-btn').forEach(btn => {
+    if (btn.textContent === tag) {
+      btn.classList.add('inserted');
+      setTimeout(() => btn.classList.remove('inserted'), 400);
+    }
+  });
+}
+
+function addCustomTag() {
+  const input = document.getElementById('customTagInput');
+  const tag = input.value.trim();
+  if (!tag) return;
+  const formatted = tag.startsWith('[') ? tag : `[${tag}]`;
+  const grid = document.getElementById('tagGrid');
+  const btn = document.createElement('button');
+  btn.className = 'tag-btn';
+  btn.textContent = formatted;
+  btn.onclick = () => insertTag(formatted);
+  grid.appendChild(btn);
+  customTags.push(formatted);
+  document.getElementById('tagCount').textContent = 10 + customTags.length;
+  input.value = '';
+  input.focus();
+}
+
+function insertSceneBreak() {
+  if (!activeTextarea) {
+    document.getElementById('lastTag').innerHTML = '<span style="color:var(--red)">Click a text block first!</span>';
+    return;
+  }
+  const ta = activeTextarea;
+  const start = ta.selectionStart;
+  const before = ta.value.substring(0, start);
+  const after = ta.value.substring(ta.selectionEnd);
+  ta.value = before + '\n---\n' + after;
+  ta.selectionStart = ta.selectionEnd = start + 5;
+  ta.focus();
+  document.getElementById('lastTag').innerHTML = '<code>---</code> scene break inserted';
+}
+
+// CHIPS
+function renderChips() {
+  const bar = document.getElementById('charBar');
+  const chips = characters.map(c => `
+    <div class="char-chip ${selectedChar === c.name ? 'active' : ''}" 
+         style="border-color: ${selectedChar === c.name ? c.color : ''}; box-shadow: ${selectedChar === c.name ? '0 0 16px ' + c.color + '33' : ''}"
+         onclick="selectChar('${c.name}')">
+      <span class="dot" style="background:${c.color}"></span>
+      ${c.name}
+      <span class="remove" onclick="event.stopPropagation();removeChar('${c.name}')">✕</span>
+    </div>
+  `).join('');
+  bar.innerHTML = `<div class="char-bar-title">Cast</div>${chips}<button class="add-char-btn" onclick="openModal()">+ Char</button>`;
+}
+
+// BLOCKS
+function renderBlocks() {
+  const editor = document.getElementById('editor');
+  const empty = document.getElementById('emptyState');
+  const nonEmpty = blocks.filter(b => b.text || b.char);
+  
+  if (nonEmpty.length === 0) {
+    empty.style.display = 'flex';
+    editor.querySelectorAll('.block, .separator').forEach(b => b.remove());
+    updateCounts();
+    return;
+  }
+  
+  empty.style.display = 'none';
+  
+  let html = '';
+  blocks.forEach((block, i) => {
+    const charObj = characters.find(c => c.name === block.char);
+    const color = charObj ? charObj.color : '';
+    const assigned = !!block.char;
+    const count = block.text.length;
+    const ratio = count / 500;
+    const barColor = ratio > 0.8 ? 'var(--red)' : ratio > 0.6 ? 'var(--yellow)' : 'var(--green)';
+    
+    const prevBlock = i > 0 ? blocks[i - 1] : null;
+    const isBreak = assigned && prevBlock && prevBlock.char && prevBlock.char !== block.char;
+    
+    if (isBreak) {
+      html += `<div class="separator"><span class="diamond">◆</span> ${prevBlock.char} → ${block.char} <span class="diamond">◆</span></div>`;
+    }
+    
+    const isSelected = selectedBlocks.has(block.id);
+    
+    html += `
+      <div class="block assigned ${isBreak ? 'break-before' : ''} ${editMode ? 'editable' : ''} ${isSelected ? 'selected' : ''}"
+           style="border-top-color: ${assigned ? color : 'transparent'}"
+           onclick="handleBlockClick(${block.id}, event)" 
+           data-id="${block.id}"
+           draggable="${editMode}"
+           ondragstart="onDragStart(event, ${block.id})"
+           ondragover="onDragOver(event)"
+           ondragenter="onDragEnter(event)"
+           ondragleave="onDragLeave(event)"
+           ondrop="onDrop(event, ${block.id})"
+           ondragend="onDragEnd()">
+        <div class="drag-dots"><span></span><span></span><span></span><span></span></div>
+        <input type="checkbox" class="edit-check" ${isSelected ? 'checked' : ''} onclick="event.stopPropagation(); toggleSelect(${block.id})">
+        <div class="block-delete" onclick="event.stopPropagation();removeBlock(${block.id})">✕</div>
+        ${assigned 
+          ? `<div class="block-label" style="color:${color}">${block.char}</div>` 
+          : `<div class="unassigned-label">Unassigned</div>`}
+        <textarea placeholder="Type dialogue..." 
+                  oninput="updateText(${block.id}, this.value); autoResize(this)"
+                  onclick="event.stopPropagation()"
+                  onfocus="activeTextarea = this">${block.text}</textarea>
+        <div class="block-bottom">
+          <span>${count} / 500</span>
+        </div>
+        <div class="char-progress" style="width:${Math.min(ratio * 100, 100)}%; background:${barColor}"></div>
+      </div>
+    `;
+  });
+  
+  editor.querySelectorAll('.block, .separator').forEach(b => b.remove());
+  empty.insertAdjacentHTML('afterend', html);
+  editor.querySelectorAll('textarea').forEach(autoResize);
+  updateCounts();
+}
+
+function autoResize(el) {
+  if (!el) return;
+  el.style.height = 'auto';
+  el.style.height = Math.max(50, el.scrollHeight) + 'px';
+}
+
+// DURATION
+function updateDuration() {
+  const totalChars = blocks.reduce((sum, b) => sum + b.text.length, 0);
+  const seconds = Math.round((totalChars / 150) * 60);
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  document.getElementById('durationEst').textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
+  document.querySelectorAll('.fmt').forEach(el => {
+    const maxSecs = parseInt(el.dataset.max);
+    el.classList.toggle('match', seconds > 0 && seconds <= maxSecs);
+  });
+}
+
+function updateCounts() {
+  const totalChars = blocks.reduce((sum, b) => sum + b.text.length, 0);
+  document.getElementById('hintCount').textContent = `${blocks.length} blocks · ${totalChars} chars`;
+  updateDuration();
+}
+
+// EDIT MODE
+function toggleEditMode() {
+  editMode = !editMode;
+  document.getElementById('editBtn').classList.toggle('btn-edit-active', editMode);
+  document.getElementById('editBtn').textContent = editMode ? '✓ Done' : '✎ Edit';
+  document.getElementById('editor').classList.toggle('edit-mode', editMode);
+  if (!editMode) selectedBlocks.clear();
+  renderBlocks();
+}
+
+function handleBlockClick(id, event) {
+  if (editMode) {
+    if (event.target.tagName === 'TEXTAREA' || event.target.classList.contains('edit-check')) return;
+    toggleSelect(id);
+  } else if (selectedChar) {
+    assignBlock(id);
+  }
+}
+
+function toggleSelect(id) {
+  if (selectedBlocks.has(id)) selectedBlocks.delete(id);
+  else selectedBlocks.add(id);
+  renderBlocks();
+}
+
+// DRAG AND DROP
+function onDragStart(e, id) {
+  if (!editMode) { e.preventDefault(); return; }
+  dragSrcId = id;
+  e.target.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', id);
+}
+
+function onDragOver(e) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; }
+
+function onDragEnter(e) {
+  e.preventDefault();
+  clearDropIndicators();
+  const block = e.target.closest('.block');
+  if (!block || block.classList.contains('dragging')) return;
+  const rect = block.getBoundingClientRect();
+  const midY = rect.top + rect.height / 2;
+  block.classList.add(e.clientY < midY ? 'drop-indicator-top' : 'drop-indicator-bottom');
+}
+
+function onDragLeave(e) {
+  const block = e.target.closest('.block');
+  if (block) block.classList.remove('drop-indicator-top', 'drop-indicator-bottom');
+}
+
+function onDrop(e, targetId) {
+  e.preventDefault();
+  clearDropIndicators();
+  if (dragSrcId === null || dragSrcId === targetId) return;
+  
+  const srcIdx = blocks.findIndex(b => b.id === dragSrcId);
+  if (srcIdx === -1) return;
+  
+  const block = e.target.closest('.block');
+  let insertBefore = true;
+  if (block) {
+    const rect = block.getBoundingClientRect();
+    insertBefore = e.clientY < rect.top + rect.height / 2;
+  }
+  
+  if (selectedBlocks.size > 1 && selectedBlocks.has(dragSrcId)) {
+    const selectedArr = blocks.filter(b => selectedBlocks.has(b.id));
+    const remaining = blocks.filter(b => !selectedBlocks.has(b.id));
+    let insertIdx = remaining.findIndex(b => b.id === targetId);
+    if (!insertBefore) insertIdx++;
+    remaining.splice(insertIdx, 0, ...selectedArr);
+    blocks = remaining;
+  } else {
+    const [moved] = blocks.splice(srcIdx, 1);
+    let newIdx = blocks.findIndex(b => b.id === targetId);
+    if (!insertBefore) newIdx++;
+    blocks.splice(newIdx, 0, moved);
+  }
+  
+  dragSrcId = null;
+  renderBlocks();
+}
+
+function onDragEnd() {
+  dragSrcId = null;
+  clearDropIndicators();
+  document.querySelectorAll('.block').forEach(b => b.classList.remove('dragging'));
+}
+
+function clearDropIndicators() {
+  document.querySelectorAll('.block').forEach(b => b.classList.remove('drop-indicator-top', 'drop-indicator-bottom'));
+}
+
+// CHARACTER ACTIONS
+function selectChar(name) {
+  selectedChar = selectedChar === name ? null : name;
+  renderChips();
+  document.getElementById('hintActive').innerHTML = selectedChar 
+    ? `Selected: <span class="active-char">${selectedChar}</span> — click a block`
+    : editMode ? 'Click blocks to select, then drag to reorder' : 'Click a chip → click a block to assign';
+}
+
+function assignBlock(id) {
+  if (selectedChar) {
+    const block = blocks.find(b => b.id === id);
+    if (block) {
+      block.char = block.char === selectedChar ? null : selectedChar;
+      renderBlocks();
+    }
+  }
+}
+
+function updateText(id, text) {
+  const block = blocks.find(b => b.id === id);
+  if (block) {
+    block.text = text;
+    const el = document.querySelector(`.block[data-id="${id}"]`);
+    if (el) {
+      const count = text.length;
+      const ratio = count / 500;
+      const barColor = ratio > 0.8 ? 'var(--red)' : ratio > 0.6 ? 'var(--yellow)' : 'var(--green)';
+      el.querySelector('.block-bottom span').textContent = `${count} / 500`;
+      el.querySelector('.char-progress').style.width = Math.min(ratio * 100, 100) + '%';
+      el.querySelector('.char-progress').style.background = barColor;
+    }
+    updateCounts();
+  }
+}
+
+function addBlock() {
+  blocks.push({ id: nextId++, text: '', char: null });
+  renderBlocks();
+  document.getElementById('editor').scrollTop = document.getElementById('editor').scrollHeight;
+}
+
+function removeBlock(id) {
+  blocks = blocks.filter(b => b.id !== id);
+  selectedBlocks.delete(id);
+  renderBlocks();
+}
+
+function removeChar(name) {
+  characters = characters.filter(c => c.name !== name);
+  blocks.forEach(b => { if (b.char === name) b.char = null; });
+  if (selectedChar === name) selectedChar = null;
+  renderChips();
+  renderBlocks();
+}
+
+// MODAL
+function openModal() {
+  document.getElementById('addCharModal').classList.add('visible');
+  document.getElementById('modalCharName').focus();
+}
+
+function closeModal() {
+  document.getElementById('addCharModal').classList.remove('visible');
+  document.getElementById('modalCharName').value = '';
+}
+
+function confirmAddChar() {
+  const name = document.getElementById('modalCharName').value.trim();
+  const color = document.getElementById('modalCharColor').value;
+  if (name && !characters.find(c => c.name === name)) {
+    characters.push({ name, color });
+    renderChips();
+    closeModal();
+  }
+}
+
+// STORY VAULT — localStorage
+function getStories() {
+  try { return JSON.parse(localStorage.getItem('tripp-stories') || '[]'); }
+  catch { return []; }
+}
+
+function saveStories(stories) {
+  localStorage.setItem('tripp-stories', JSON.stringify(stories));
+}
+
+function saveCurrentStory() {
+  const title = document.getElementById('titleInput').value || 'Untitled';
+  const story = {
+    id: currentStoryId || Date.now().toString(),
+    title,
+    model: document.getElementById('modelSelect').value,
+    characters: [...characters],
+    blocks: [...blocks],
+    customTags: [...customTags],
+    nextId,
+    savedAt: new Date().toISOString(),
+    duration: document.getElementById('durationEst').textContent,
+    totalChars: blocks.reduce((sum, b) => sum + b.text.length, 0)
+  };
+  
+  const stories = getStories();
+  const existing = stories.findIndex(s => s.id === story.id);
+  if (existing >= 0) stories[existing] = story;
+  else stories.unshift(story);
+  
+  saveStories(stories);
+  currentStoryId = story.id;
+  renderVaultList();
+  
+  document.getElementById('lastTag').innerHTML = `<code>${title}</code> saved ✓`;
+}
+
+function loadStory(id) {
+  const stories = getStories();
+  const story = stories.find(s => s.id === id);
+  if (!story) return;
+  
+  currentStoryId = story.id;
+  document.getElementById('titleInput').value = story.title;
+  document.getElementById('modelSelect').value = story.model;
+  characters = [...story.characters];
+  blocks = [...story.blocks];
+  customTags = story.customTags || [];
+  nextId = story.nextId || blocks.length + 1;
+  
+  // Rebuild custom tag buttons
+  const grid = document.getElementById('tagGrid');
+  grid.querySelectorAll('.tag-btn').forEach(btn => {
+    if (customTags.includes(btn.textContent)) btn.remove();
+  });
+  customTags.forEach(tag => {
+    const btn = document.createElement('button');
+    btn.className = 'tag-btn';
+    btn.textContent = tag;
+    btn.onclick = () => insertTag(tag);
+    grid.appendChild(btn);
+  });
+  document.getElementById('tagCount').textContent = 10 + customTags.length;
+  
+  renderChips();
+  renderBlocks();
+  closeVault();
+  renderVaultList();
+}
+
+function deleteStory(id, e) {
+  e.stopPropagation();
+  const stories = getStories().filter(s => s.id !== id);
+  saveStories(stories);
+  if (currentStoryId === id) currentStoryId = null;
+  renderVaultList();
+}
+
+function newStory() {
+  currentStoryId = null;
+  document.getElementById('titleInput').value = '';
+  characters = [
+    { name: 'Nova', color: '#39ff14' },
+    { name: 'Aria', color: '#00ccff' }
+  ];
+  blocks = [{ id: 1, text: '', char: null }];
+  customTags = [];
+  nextId = 2;
+  
+  // Remove custom tag buttons
+  const grid = document.getElementById('tagGrid');
+  grid.querySelectorAll('.tag-btn').forEach((btn, i) => {
+    if (i >= 10) btn.remove();
+  });
+  document.getElementById('tagCount').textContent = '10';
+  
+  renderChips();
+  renderBlocks();
+  closeVault();
+}
+
+function renderVaultList() {
+  const stories = getStories();
+  const list = document.getElementById('vaultList');
+  
+  if (stories.length === 0) {
+    list.innerHTML = `
+      <div class="vault-empty">
+        <pre>
+┌────────────────────┐
+│  NO SAVED STORIES  │
+│                    │
+│  Save your first   │
+│  storyboard to     │
+│  begin building    │
+│  the vault.        │
+└────────────────────┘
+        </pre>
+        <span>Your stories will appear here.</span>
+      </div>`;
+    return;
+  }
+  
+  list.innerHTML = stories.map(s => {
+    const date = new Date(s.savedAt);
+    const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    const timeStr = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    const charNames = s.characters.map(c => c.name).join(', ');
+    
+    return `
+      <div class="vault-item ${s.id === currentStoryId ? 'active' : ''}" onclick="loadStory('${s.id}')">
+        <span class="vault-item-delete" onclick="deleteStory('${s.id}', event)">✕</span>
+        <div class="vault-item-title">${s.title || 'Untitled'}</div>
+        <div class="vault-item-meta">
+          <span>${dateStr} ${timeStr}</span>
+          <span class="chars">${s.totalChars || 0} chars</span>
+          <span>${s.duration || '0:00'}</span>
+        </div>
+        <div class="vault-item-chars">
+          ${s.characters.map(c => `<span class="vault-item-char" style="border-color:${c.color};color:${c.color}">${c.name}</span>`).join('')}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function openVault() {
+  renderVaultList();
+  document.getElementById('vaultOverlay').classList.add('open');
+  document.getElementById('storyVault').classList.add('open');
+}
+
+function closeVault() {
+  document.getElementById('vaultOverlay').classList.remove('open');
+  document.getElementById('storyVault').classList.remove('open');
+}
+
+// EXPORT
+function exportJSON() {
+  const data = {
+    title: document.getElementById('titleInput').value,
+    model: document.getElementById('modelSelect').value,
+    characters,
+    customTags,
+    duration: document.getElementById('durationEst').textContent,
+    storyboard: blocks.filter(b => b.text || b.char).map(b => ({
+      character: b.char,
+      text: b.text,
+      charCount: b.text.length
+    }))
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${data.title || 'storyboard'}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// KEYBOARD
+document.addEventListener('keydown', e => {
+  if (e.ctrlKey && e.key === 'Enter') { e.preventDefault(); addBlock(); }
+  if (e.ctrlKey && e.key === 's') { e.preventDefault(); saveCurrentStory(); }
+  if (e.key === 'Escape') { closeModal(); closeVault(); if (editMode) toggleEditMode(); }
+  if (e.key === 'Delete' && editMode && selectedBlocks.size > 0) {
+    blocks = blocks.filter(b => !selectedBlocks.has(b.id));
+    selectedBlocks.clear();
+    renderBlocks();
+  }
+});
+
+// INIT
+renderChips();
+renderBlocks();
+
+</script>
+</body>
+</html>
