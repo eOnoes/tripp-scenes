@@ -1,0 +1,5 @@
+data/
+exports/
+.env
+*.log
+
