@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Tripp.Scenes — v2-inline-002</title>
+<title>Tripp.Scenes — AI Story Studio</title>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 </head>
@@ -34,6 +34,19 @@
     <option>MiMo TTS</option>
     <option>Orpheus</option>
   </select>
+  <label>Output</label>
+  <select id="outputFormat">
+    <option value="short">Short · 9:16</option>
+    <option value="long">Long · 16:9</option>
+    <option value="square">Square · 1:1</option>
+  </select>
+  <label>Mode</label>
+  <select id="collaborationMode" onchange="changeCollaborationMode(this.value)">
+    <option value="human">Human-led</option>
+    <option value="agent">Agent-led</option>
+    <option value="collab">Collaborative</option>
+  </select>
+  <button class="btn" onclick="openCollaboration()">⌁ Team <span id="teamBadge">0</span></button>
   <button class="btn" id="editBtn" onclick="toggleEditMode()">✎ Edit</button>
   <button class="btn btn-primary" onclick="addBlock()">+ Block</button>
 </div>
@@ -147,9 +160,73 @@
   </div>
   <div class="bottom-actions">
     <button class="btn" onclick="exportJSON()">Export JSON</button>
-    <button class="btn-generate" onclick="alert('Generate would start here')">▶ Generate</button>
+    <button class="btn" onclick="openAssets()">▦ Assets <span id="assetCount">0</span></button>
+    <button class="btn-generate" onclick="openGenerate()">▶ Generate</button>
   </div>
 </div>
+
+<!-- Generation Review Modal -->
+<div class="modal-overlay generation-overlay" id="generateModal">
+  <div class="modal generation-modal">
+    <div class="generation-head">
+      <div><div class="eyebrow">Generation Review</div><h3>Build visual takes</h3></div>
+      <button class="vault-close" onclick="closeGenerate()">✕</button>
+    </div>
+    <div class="generation-grid">
+      <label>Media<select id="mediaType" onchange="syncProviderModels()"><option value="image">Image</option><option value="video">Video clip</option></select></label>
+      <label>Provider<select id="providerSelect" onchange="syncProviderModels()"></select></label>
+      <label>Model<select id="providerModel"></select></label>
+      <label>Aspect<select id="aspectRatio"><option>9:16</option><option>16:9</option><option>1:1</option></select></label>
+      <label>Quality<select id="generationQuality"><option>medium</option><option>high</option><option>low</option></select></label>
+      <label>Clip length<select id="clipDuration"><option>5s</option><option>10s</option></select></label>
+    </div>
+    <label class="field-label">Visual prompt<textarea id="visualPrompt" rows="5" placeholder="Describe the shot, subject, environment, camera, light, and visual style..."></textarea></label>
+    <label class="field-label">Negative prompt<input id="negativePrompt" placeholder="What should not appear..."></label>
+    <div class="generation-summary" id="generationSummary"></div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeGenerate()">Cancel</button>
+      <button class="btn btn-primary" id="generateSubmit" onclick="submitGeneration()">Queue Image</button>
+    </div>
+  </div>
+</div>
+
+<!-- Asset / Job Drawer -->
+<div class="story-vault-overlay" id="assetOverlay" onclick="closeAssets()"></div>
+<aside class="story-vault asset-drawer" id="assetDrawer">
+  <div class="vault-header"><span class="vault-title">▦ Assets + Jobs</span><button class="vault-close" onclick="closeAssets()">✕</button></div>
+  <div class="vault-actions"><button class="btn" onclick="refreshAssets()">↻ Refresh</button><label class="btn" style="cursor:pointer">+ Voice / Audio<input id="audioUpload" type="file" accept="audio/*" hidden onchange="uploadAudio(this)"></label><button class="btn btn-primary" onclick="exportPackage()">Render Package</button></div>
+  <div class="asset-status" id="assetStatus">No generation jobs yet.</div>
+  <div class="asset-list" id="assetList"></div>
+</aside>
+
+<!-- Collaboration Drawer -->
+<div class="story-vault-overlay" id="collabOverlay" onclick="closeCollaboration()"></div>
+<aside class="story-vault collab-drawer" id="collabDrawer">
+  <div class="vault-header"><span class="vault-title">⌁ Production Team</span><button class="vault-close" onclick="closeCollaboration()">✕</button></div>
+  <div class="team-mode-card">
+    <div class="eyebrow">Creation mode</div>
+    <strong id="teamModeLabel">Human-led</strong>
+    <p id="teamModeDescription">You write. Agents review only when invited.</p>
+  </div>
+  <div class="agent-roster" id="agentRoster"></div>
+  <div class="audit-request-bar">
+    <select id="auditScope"><option value="project">Full project</option><option value="script">Script + facts</option><option value="generation">Generation readiness</option><option value="publish">Publish readiness</option></select>
+    <input id="auditNote" placeholder="Optional focus for OpenClaw...">
+    <button class="btn btn-primary" onclick="requestOpenClawAudit()">Request Audit</button>
+  </div>
+  <div class="collab-tabs">
+    <button class="active" data-tab="proposals" onclick="switchCollabTab('proposals',this)">Proposals</button>
+    <button data-tab="tasks" onclick="switchCollabTab('tasks',this)">Tasks</button>
+    <button data-tab="audits" onclick="switchCollabTab('audits',this)">Audit</button>
+    <button data-tab="activity" onclick="switchCollabTab('activity',this)">Activity</button>
+  </div>
+  <div class="collab-compose" id="taskComposer" style="display:none">
+    <input id="humanTaskTitle" placeholder="Assign a task to the team...">
+    <select id="humanTaskAssignee"><option value="hermes-writer">Hermes Writer</option><option value="hermes-director">Hermes Director</option><option value="openclaw-auditor">OpenClaw Auditor</option></select>
+    <button class="btn btn-primary" onclick="createHumanTask()">Assign</button>
+  </div>
+  <div class="collab-feed" id="collabFeed"></div>
+</aside>
 
 <!-- Add Character Modal -->
 <div class="modal-overlay" id="addCharModal">
