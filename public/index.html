@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tripp.Scenes — v2-inline-002</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- STORY VAULT DRAWER -->
+<div class="story-vault-overlay" id="vaultOverlay" onclick="closeVault()"></div>
+<div class="story-vault" id="storyVault">
+  <div class="vault-header">
+    <span class="vault-title">📚 Story Vault</span>
+    <button class="vault-close" onclick="closeVault()">✕</button>
+  </div>
+  <div class="vault-actions">
+    <button class="btn btn-primary" onclick="saveCurrentStory()" style="flex:1">💾 Save Current</button>
+    <button class="btn" onclick="newStory()">+ New</button>
+  </div>
+  <div class="vault-list" id="vaultList"></div>
+</div>
+
+<!-- TOOLBAR -->
+<div class="toolbar">
+  <button class="btn" onclick="openVault()" title="Story Vault">📚</button>
+  <label>Title</label>
+  <input type="text" class="title-input" id="titleInput" placeholder="Episode title..." value="Nova Breaks — Episode 5">
+  <label>Model</label>
+  <select id="modelSelect">
+    <option>Chatterbox</option>
+    <option>MiMo TTS</option>
+    <option>Orpheus</option>
+  </select>
+  <button class="btn" id="editBtn" onclick="toggleEditMode()">✎ Edit</button>
+  <button class="btn btn-primary" onclick="addBlock()">+ Block</button>
+</div>
+
+<div class="char-bar" id="charBar">
+  <div class="char-bar-title">Cast</div>
+</div>
+
+<div class="hint-bar">
+  <div id="hintActive">Click a chip → click a block to assign</div>
+  <div id="hintCount">0 blocks</div>
+</div>
+
+<div class="main-layout">
+  <div class="editor" id="editor">
+    <div class="empty-state" id="emptyState" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:#555;text-align:center;gap:12px">
+      <pre style="font-size:11px;color:#2a2a2a">
+┌──────────────────────────┐
+│   TRIPP.SCENES v002      │
+│  Story Vault + Tags      │
+│                          │
+│  📚 = open vault         │
+│  Click chip → block      │
+│  Right panel = tags      │
+│                          │
+│  Edit mode: drag reorder │
+└──────────────────────────┘
+      </pre>
+    </div>
+  </div>
+
+  <div class="right-panel">
+    <div class="panel-section">
+      <div class="panel-header">
+        <span>🎭 Emotion Tags</span>
+        <span class="count" id="tagCount">10</span>
+      </div>
+      <div class="panel-body">
+        <div class="tag-grid" id="tagGrid">
+          <button class="tag-btn" onclick="insertTag('[laugh]')">[laugh]</button>
+          <button class="tag-btn" onclick="insertTag('[chuckle]')">[chuckle]</button>
+          <button class="tag-btn" onclick="insertTag('[gasp]')">[gasp]</button>
+          <button class="tag-btn" onclick="insertTag('[sigh]')">[sigh]</button>
+          <button class="tag-btn" onclick="insertTag('[clear throat]')">[clear throat]</button>
+          <button class="tag-btn" onclick="insertTag('[shush]')">[shush]</button>
+          <button class="tag-btn" onclick="insertTag('[groan]')">[groan]</button>
+          <button class="tag-btn" onclick="insertTag('[sniff]')">[sniff]</button>
+          <button class="tag-btn" onclick="insertTag('[cough]')">[cough]</button>
+          <button class="tag-btn" onclick="insertTag('[pause]')">[pause]</button>
+        </div>
+        <div class="custom-tag-row">
+          <input type="text" id="customTagInput" placeholder="Custom tag..." onkeydown="if(event.key==='Enter')addCustomTag()">
+          <button class="btn" onclick="addCustomTag()">+</button>
+        </div>
+        <div class="tag-preview">
+          <div class="label">Last inserted</div>
+          <div id="lastTag">—</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel-section">
+      <div class="panel-header">
+        <span>📋 Model Reference</span>
+      </div>
+      <div class="panel-body">
+        <div class="format-list">
+          <div class="format-item">
+            <span class="fmt-label">CHK</span>
+            <span class="fmt-desc">All 10 tags. Max ~40s/chunk.</span>
+          </div>
+          <div class="format-item">
+            <span class="fmt-label">MiMo</span>
+            <span class="fmt-desc">Style tags via API. Max ~60s.</span>
+          </div>
+          <div class="format-item">
+            <span class="fmt-label">ORP</span>
+            <span class="fmt-desc">Inline tags. Max ~30s.</span>
+          </div>
+        </div>
+        <div class="tag-preview" style="margin-top:10px">
+          <div class="label">Char limit per block</div>
+          <div>500 chars · 40s safe window</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel-section">
+      <div class="panel-header">
+        <span>🎬 Scene Tools</span>
+      </div>
+      <div class="panel-body">
+        <button class="btn" style="width:100%" onclick="insertSceneBreak()">+ Scene Break</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="bottom-bar">
+  <div class="duration-ticker">
+    <span>Duration:</span>
+    <span class="est" id="durationEst">0:00</span>
+    <div class="formats" id="formatTicks">
+      <span class="fmt" data-max="10">10s</span>
+      <span class="fmt" data-max="20">20s</span>
+      <span class="fmt" data-max="60">1m</span>
+      <span class="fmt" data-max="120">2m</span>
+      <span class="fmt" data-max="300">5m</span>
+      <span class="fmt" data-max="600">10m</span>
+    </div>
+  </div>
+  <div class="bottom-actions">
+    <button class="btn" onclick="exportJSON()">Export JSON</button>
+    <button class="btn-generate" onclick="alert('Generate would start here')">▶ Generate</button>
+  </div>
+</div>
+
+<!-- Add Character Modal -->
+<div class="modal-overlay" id="addCharModal">
+  <div class="modal">
+    <h3>Add Character</h3>
+    <input type="text" id="modalCharName" placeholder="Character name...">
+    <input type="color" id="modalCharColor" value="#ff6b6b" style="width:48px;height:36px;padding:2px;cursor:pointer">
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="confirmAddChar()">Add</button>
+    </div>
+  </div>
+</div>
+<script src="app.js"></script>
+</body>
+</html>
