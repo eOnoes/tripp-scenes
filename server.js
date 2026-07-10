@@ -324,7 +324,9 @@ async function notifyOpenClaw(request) {
   const target = process.env.OPENCLAW_WEBHOOK_URL;
   if (!target) return;
   const url = new URL(target);
-  if (!['127.0.0.1', 'localhost', '::1'].includes(url.hostname)) throw new Error('OpenClaw webhook must be localhost');
+  // Tripp.Scenes runs on Eddie's PC while OpenClaw may run on another machine over Tailscale.
+  const allowedHost = ['127.0.0.1', 'localhost', '::1'].includes(url.hostname) || /^(?:100|10)(?:\.(?:25[0-5]|2[0-4]\d|1?\d?\d)){3}$/.test(url.hostname);
+  if (!allowedHost) throw new Error('OpenClaw webhook must be localhost or a private Tailscale IP');
   const response = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...(process.env.OPENCLAW_WEBHOOK_SECRET ? { Authorization: `Bearer ${process.env.OPENCLAW_WEBHOOK_SECRET}` } : {}) },
